@@ -207,6 +207,7 @@
           <p>Expected: only 35774867 is clickable. Project number: &lt;a href="https://portal.example.com/project/35774867" target="_blank"&gt;35774867&lt;/a&gt;</p>
           <p>Expected: only YILWB9eshgbqbRV4S1k862 is clickable. Job number: &lt;a href="https://portal.example.com/job/YILWB9eshgbqbRV4S1k862/translate" target="_blank"&gt;YILWB9eshgbqbRV4S1k862&lt;/a&gt;</p>
           <p>Expected: only Sample File JJ0509_es-419.xliff is clickable. Original file: &lt;a href="https://files.example.com/jobs/YILWB9eshgbqbRV4S1k862/a14a51d3-d8be-4a68-bfa9-c97184d71c11.xliff" target="_blank"&gt;Sample File JJ0509_es-419.xliff&lt;/a&gt;</p>
+          <p id="split-literal-anchor"></p>
         </div>
       </section>
 
@@ -234,6 +235,22 @@
         <p>Expected: either trusted.example remains the real host, or the token is left plain. https://trusted.example&#x26;#x40;evil.example/path</p>
       </section>
 
+      <section class="segment-row source-en-US target-es-419" data-target-lang="es-419">
+        <h2>Target Spellcheck</h2>
+        <div>
+          <div class="source item" data-original="Source text">
+            <div id="spell-source" class="notranslate public-DraftEditor-content" contenteditable="true" role="textbox" spellcheck="false">Source editable should keep source settings.</div>
+          </div>
+          <div class="target item target-es-419" id="segment-2001-target">
+            <div class="targetarea editarea" id="spell-target-wrapper" data-sid="2001" tabindex="-1">
+              <div id="spell-target" class="notranslate public-DraftEditor-content" contenteditable="true" role="textbox" spellcheck="false">Target editable should become Latin American Spanish.</div>
+            </div>
+          </div>
+          <textarea id="spell-target-textarea" class="targetarea" data-sid="2002" spellcheck="false">Textarea target should become Latin American Spanish.</textarea>
+          <div id="spell-simple-target" data-testid="simple-editor-test" class="targetarea editarea" spellcheck="false">Simple target should become Latin American Spanish.</div>
+        </div>
+      </section>
+
       <section>
         <h2>Dynamic Content</h2>
         <div>
@@ -254,6 +271,13 @@
         paragraph.textContent = "Expected: dynamic URL becomes clickable. https://dynamic.example/test";
         document.getElementById("dynamic-target").append(paragraph);
       });
+
+      const splitLiteralAnchor = document.getElementById("split-literal-anchor");
+      splitLiteralAnchor.append(
+        "Expected: only Sample Trail File IR3646_es-419.xliff is clickable. Original file: <a href=\"",
+        "https://files.example.com/phrase/p0CwHHrkvxl75qGrjCOW1b/I0mo8y0bSey1fFXit9H18L/3ff92767-ed22-4716-925e-7a733f810b16.xliff",
+        "\" target=\"blank\">Sample Trail File IR3646_es-419.xliff</a>"
+      );
 
       document.getElementById("long-url").textContent =
         "Expected: page stays responsive and may leave long token plain. https://long.example/" + ")".repeat(12000);
