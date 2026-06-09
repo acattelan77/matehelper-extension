@@ -6,10 +6,15 @@ MateHelper is not affiliated with, endorsed by, sponsored by, or officially conn
 
 ## Install
 
-1. Open `chrome://extensions`.
-2. Enable **Developer mode**.
-3. Click **Load unpacked**.
-4. Select `/Users/alessandrocattelan/Dev/matehelper`.
+Install MateHelper from its Chrome Web Store listing once it is published.
+
+For local development or review:
+
+1. Download and unzip `release/matehelper-0.1.0.zip`.
+2. Open `chrome://extensions`.
+3. Enable **Developer mode**.
+4. Click **Load unpacked**.
+5. Select the unzipped MateHelper extension folder.
 
 ## Behavior
 
