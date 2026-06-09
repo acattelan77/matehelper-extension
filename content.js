@@ -21,13 +21,15 @@
     "kbd",
     "samp"
   ].join(",");
-  const QUICK_MATCH_PATTERN = /https?:\/\//i;
+  const QUICK_MATCH_PATTERN = /https?:\/\/|<a\b/i;
+  const ANCHOR_TAG_PATTERN = /<a\b(?=[^>]*\bhref\s*=)[^>]*>[\s\S]*?<\/a>/gi;
   const URL_PATTERN = /https?:\/\/[^\s<>"']+/gi;
   const HTML_ENTITY_PATTERN = /&(?:#[0-9]+|#x[0-9a-f]+|[a-z][a-z0-9]+);/i;
   const MAX_URL_LENGTH = 4096;
   const MAX_URLS_PER_TEXT_NODE = 100;
 
   const queuedRoots = new Set();
+  const enhancedAnchors = new WeakSet();
   let flushScheduled = false;
   let observerSuppressed = false;
 
@@ -183,6 +185,10 @@
     }
   }
 
+  function handleLinkClick(event) {
+    event.stopPropagation();
+  }
+
   function createAnchor(url, label) {
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -190,17 +196,33 @@
     anchor.rel = "noopener noreferrer";
     anchor.textContent = label;
     anchor.setAttribute(GENERATED_LINK_ATTR, "true");
-    anchor.addEventListener("click", (event) => {
-      event.stopPropagation();
-    });
+    anchor.addEventListener("click", handleLinkClick);
     return anchor;
   }
 
-  function buildReplacementFragment(text) {
-    const fragment = document.createDocumentFragment();
+  function parseLiteralAnchor(rawAnchor) {
+    const template = document.createElement("template");
+    template.innerHTML = rawAnchor;
+
+    const anchor = template.content.querySelector("a[href]");
+    const rawHref = anchor?.getAttribute("href") || "";
+    const label = anchor?.textContent || "";
+    const normalizedUrl = normalizeUrl(rawHref);
+
+    if (!normalizedUrl || !label.trim()) {
+      return null;
+    }
+
+    return {
+      label,
+      url: normalizedUrl
+    };
+  }
+
+  function appendLinkifiedText(fragment, text, state) {
     let cursor = 0;
     let match;
-    let urlCount = 0;
+    let changed = false;
 
     URL_PATTERN.lastIndex = 0;
 
@@ -208,7 +230,7 @@
       const [fullMatch] = match;
       const start = match.index;
 
-      if (urlCount >= MAX_URLS_PER_TEXT_NODE) {
+      if (state.urlCount >= MAX_URLS_PER_TEXT_NODE) {
         break;
       }
 
@@ -222,6 +244,7 @@
 
       if (normalizedUrl) {
         fragment.append(createAnchor(normalizedUrl, originalDisplayText));
+        changed = true;
       } else {
         fragment.append(document.createTextNode(originalDisplayText));
       }
@@ -231,18 +254,89 @@
       }
 
       cursor = start + fullMatch.length;
-      urlCount += 1;
+      state.urlCount += 1;
     }
 
     if (cursor === 0) {
-      return null;
+      fragment.append(document.createTextNode(text));
+      return changed;
     }
 
     if (cursor < text.length) {
       fragment.append(document.createTextNode(text.slice(cursor)));
     }
 
-    return fragment;
+    return changed;
+  }
+
+  function buildReplacementFragment(text) {
+    const fragment = document.createDocumentFragment();
+    const state = { urlCount: 0 };
+    let cursor = 0;
+    let match;
+    let changed = false;
+
+    ANCHOR_TAG_PATTERN.lastIndex = 0;
+
+    while ((match = ANCHOR_TAG_PATTERN.exec(text)) !== null) {
+      const [fullMatch] = match;
+      const start = match.index;
+
+      if (start > cursor) {
+        changed = appendLinkifiedText(fragment, text.slice(cursor, start), state) || changed;
+      }
+
+      const parsedAnchor = parseLiteralAnchor(fullMatch);
+
+      if (parsedAnchor) {
+        fragment.append(createAnchor(parsedAnchor.url, parsedAnchor.label));
+        changed = true;
+      } else {
+        fragment.append(document.createTextNode(fullMatch));
+      }
+
+      cursor = start + fullMatch.length;
+    }
+
+    if (cursor < text.length) {
+      changed = appendLinkifiedText(fragment, text.slice(cursor), state) || changed;
+    } else if (cursor === 0) {
+      changed = appendLinkifiedText(fragment, text, state) || changed;
+    }
+
+    return changed ? fragment : null;
+  }
+
+  function enhanceExistingAnchor(anchor) {
+    if (
+      !(anchor instanceof HTMLAnchorElement) ||
+      isGeneratedLink(anchor) ||
+      enhancedAnchors.has(anchor) ||
+      isEditable(anchor)
+    ) {
+      return;
+    }
+
+    const normalizedUrl = normalizeUrl(anchor.getAttribute("href") || "");
+
+    if (!normalizedUrl) {
+      return;
+    }
+
+    anchor.addEventListener("click", handleLinkClick);
+    enhancedAnchors.add(anchor);
+  }
+
+  function enhanceExistingAnchors(root) {
+    if (!root || root.nodeType !== Node.ELEMENT_NODE) {
+      return;
+    }
+
+    if (root.matches("a[href]")) {
+      enhanceExistingAnchor(root);
+    }
+
+    root.querySelectorAll("a[href]").forEach(enhanceExistingAnchor);
   }
 
   function linkifyTextNode(node) {
@@ -273,6 +367,8 @@
       linkifyTextNode(root);
       return;
     }
+
+    enhanceExistingAnchors(root);
 
     const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const textNodes = [];

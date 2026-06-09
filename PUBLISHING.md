@@ -5,7 +5,7 @@
 - Recommended visibility: Unlisted
 - Category: Productivity
 - Language: English
-- Package to upload: `release/matehelper-0.1.0.zip`
+- Package to upload: `release/matehelper-0.1.1.zip`
 
 ## Required Images
 
@@ -45,18 +45,18 @@ If GitHub Pages is not enabled, publish `docs/privacy.html` through another stat
 
 Permission justification:
 
-`MateHelper runs only on matecat.com and subdomains because it needs to inspect Matecat page text and convert visible plain-text http:// and https:// URLs into clickable links. The extension processes this text locally in the browser and does not send, store, or collect page content.`
+`MateHelper runs only on the supported site patterns declared in the extension manifest because it needs to inspect visible page text and convert visible plain-text http:// and https:// URLs into clickable links. The extension processes this text locally in the browser and does not send, store, or collect page content.`
 
 Single purpose:
 
-`Make plain-text URLs clickable on Matecat pages.`
+`Make plain-text URLs clickable on supported web pages.`
 
 ## Final Local Checks
 
 1. Open `chrome://extensions`.
 2. Enable Developer mode.
 3. Load the unpacked project folder.
-4. Open `qa/smoke-test.html` or a Matecat page.
+4. Open `qa/smoke-test.html` or a supported web page.
 5. Confirm plain-text URLs become clickable.
 6. Confirm inputs, textareas, editable content, code blocks, and existing links are not changed.
-7. Upload `release/matehelper-0.1.0.zip` to the Chrome Web Store dashboard.
+7. Upload `release/matehelper-0.1.1.zip` to the Chrome Web Store dashboard.
