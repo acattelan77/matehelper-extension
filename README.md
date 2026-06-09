@@ -10,7 +10,7 @@ Install MateHelper from its Chrome Web Store listing once it is published.
 
 For local development or review:
 
-1. Download and unzip `release/matehelper-0.1.2.zip`.
+1. Download and unzip `release/matehelper-0.2.0.zip`.
 2. Open `chrome://extensions`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
@@ -30,7 +30,7 @@ For local development or review:
 
 ## Release Package
 
-The Chrome Web Store package is `release/matehelper-0.1.2.zip`.
+The Chrome Web Store package is `release/matehelper-0.2.0.zip`.
 
 It contains only:
 

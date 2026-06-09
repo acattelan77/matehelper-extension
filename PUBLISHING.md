@@ -5,7 +5,7 @@
 - Recommended visibility: Unlisted
 - Category: Productivity
 - Language: English
-- Package to upload: `release/matehelper-0.1.2.zip`
+- Package to upload: `release/matehelper-0.2.0.zip`
 
 ## Required Images
 
@@ -61,4 +61,4 @@ Single purpose:
 6. Confirm literal anchor snippets link the visible label, not the raw attribute URL.
 7. Confirm target editing areas receive the detected target language and browser spellcheck.
 8. Confirm source text, unrelated inputs, unrelated textareas, editable content outside target areas, code blocks, and existing links are not changed.
-9. Upload `release/matehelper-0.1.2.zip` to the Chrome Web Store dashboard.
+9. Upload `release/matehelper-0.2.0.zip` to the Chrome Web Store dashboard.
