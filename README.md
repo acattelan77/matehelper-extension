@@ -1,8 +1,8 @@
 # MateHelper
 
-MateHelper is an unofficial Chrome extension for Matecat users. It converts plain-text `http://` and `https://` URLs into clickable links.
+MateHelper is an unofficial Chrome extension that converts plain-text `http://` and `https://` URLs into clickable links on supported web pages.
 
-MateHelper is not affiliated with, endorsed by, sponsored by, or officially connected to Matecat or Translated srl.
+MateHelper is independent and is not affiliated with, endorsed by, sponsored by, or officially connected to any third-party platform, customer, or vendor.
 
 ## Install
 
@@ -10,7 +10,7 @@ Install MateHelper from its Chrome Web Store listing once it is published.
 
 For local development or review:
 
-1. Download and unzip `release/matehelper-0.1.0.zip`.
+1. Download and unzip `release/matehelper-0.1.1.zip`.
 2. Open `chrome://extensions`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
@@ -18,7 +18,7 @@ For local development or review:
 
 ## Behavior
 
-- Runs only on `matecat.com` and its subdomains.
+- Runs only on the supported site patterns declared in the extension manifest.
 - Converts plain-text URLs into links that open in a new tab.
 - Watches for dynamically rendered content, including modals and popups.
 - Skips existing links, form fields, editable content, and code blocks.
@@ -27,7 +27,7 @@ For local development or review:
 
 ## Release Package
 
-The Chrome Web Store package is `release/matehelper-0.1.0.zip`.
+The Chrome Web Store package is `release/matehelper-0.1.1.zip`.
 
 It contains only:
 
