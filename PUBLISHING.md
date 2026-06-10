@@ -5,7 +5,7 @@
 - Recommended visibility: Unlisted
 - Category: Productivity
 - Language: English
-- Package to upload: `release/matehelper-0.3.7.zip`
+- Package to upload: `release/matehelper-0.3.8.zip`
 
 Older ZIPs in `release/` are historical artifacts. Upload only the package listed above.
 
@@ -66,4 +66,4 @@ Single purpose:
 9. Confirm the Chrome Spell Check icon button opens `chrome://settings/languages`.
 10. Confirm source text, unrelated inputs, unrelated textareas, editable content outside target areas, code blocks, and existing links are not changed.
 11. Confirm `qa/smoke-test.html` reports `"passed": true`.
-12. Upload `release/matehelper-0.3.7.zip` to the Chrome Web Store dashboard.
+12. Upload `release/matehelper-0.3.8.zip` to the Chrome Web Store dashboard.

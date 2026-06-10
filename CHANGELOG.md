@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.8
+
+- Preserved existing `lang` attributes on target editors instead of overwriting them.
+
 ## 0.3.7
 
 - Updated popup copy for URL links, target language, enhanced spellcheck, Chrome spellcheck, and diagnostics.

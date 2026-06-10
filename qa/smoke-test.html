@@ -248,6 +248,7 @@
           </div>
           <textarea id="spell-target-textarea" class="targetarea" data-sid="2002" spellcheck="false">Textarea target should become Latin American Spanish.</textarea>
           <div id="spell-simple-target" data-testid="simple-editor-test" class="targetarea editarea" spellcheck="false">Simple target should become Latin American Spanish.</div>
+          <div id="spell-existing-lang-target" class="targetarea editarea" data-sid="2004" lang="it" spellcheck="false">Existing language target should keep its language.</div>
           <button id="reset-spellcheck" type="button">Reset target spellcheck</button>
           <button id="replace-target-editor" type="button">Replace target editor</button>
           <div id="replacement-target" class="targetarea editarea" data-sid="2003"></div>
@@ -349,6 +350,7 @@
         const existingLink = document.querySelector('a[href="https://example.org/"]');
         const resetTarget = spellcheckState("spell-target");
         const replacementTarget = spellcheckState("spell-replacement-target");
+        const existingLangTarget = spellcheckState("spell-existing-lang-target");
         const sourceTarget = spellcheckState("spell-source");
 
         assertCheck(results, "Generated expected links", generatedLinks.length >= 8, generatedLinks.length);
@@ -356,6 +358,7 @@
         assertCheck(results, "Existing link not marked generated", existingLink && !existingLink.hasAttribute("data-matehelper-generated"));
         assertCheck(results, "Focus restored target spellcheck", resetTarget?.lang === "es-419" && resetTarget?.spellcheck === "true", resetTarget);
         assertCheck(results, "Replacement editor received spellcheck", replacementTarget?.lang === "es-419" && replacementTarget?.spellcheck === "true", replacementTarget);
+        assertCheck(results, "Existing lang preserved", existingLangTarget?.lang === "it" && existingLangTarget?.spellcheck === "true", existingLangTarget);
         assertCheck(results, "Source editor unchanged", sourceTarget?.lang === null && sourceTarget?.spellcheck === "false", sourceTarget);
 
         const passed = results.every((result) => result.passed);

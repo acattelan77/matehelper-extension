@@ -633,7 +633,7 @@
       });
     }
 
-    if (element.getAttribute("lang") !== targetLanguage) {
+    if (!element.hasAttribute("lang")) {
       element.setAttribute("lang", targetLanguage);
     }
 

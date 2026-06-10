@@ -10,7 +10,7 @@ Install MateHelper from its Chrome Web Store listing once it is published.
 
 For local development or review:
 
-1. Download and unzip `release/matehelper-0.3.7.zip`.
+1. Download and unzip `release/matehelper-0.3.8.zip`.
 2. Open `chrome://extensions`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
@@ -41,7 +41,7 @@ The popup includes a Chrome Spell Check row with an icon button that opens Chrom
 
 ## Release Package
 
-The Chrome Web Store package is `release/matehelper-0.3.7.zip`.
+The Chrome Web Store package is `release/matehelper-0.3.8.zip`.
 
 It contains only:
 
