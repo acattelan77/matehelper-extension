@@ -10,7 +10,7 @@ Install MateHelper from its Chrome Web Store listing once it is published.
 
 For local development or review:
 
-1. Download and unzip `release/matehelper-0.3.0.zip`.
+1. Download and unzip `release/matehelper-0.3.1.zip`.
 2. Open `chrome://extensions`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
@@ -24,10 +24,10 @@ For local development or review:
 - Keeps raw URLs inside literal anchor attributes from being linked accidentally.
 - Enables browser spellcheck on target-language editing areas when a target language can be detected from the page.
 - Reapplies target spellcheck when Matecat replaces or resets target editors.
-- Includes a toolbar popup to toggle clickable URLs, spellcheck, and diagnostics.
+- Includes a toolbar popup to toggle clickable URLs, target editor spellcheck, optional Chrome enhanced spell check, and diagnostics.
 - Watches for dynamically rendered content, including modals and popups.
 - Skips existing links, source text, unrelated form fields, editable content outside target areas, buttons, and code blocks.
-- Uses Chrome storage only for feature preferences.
+- Uses Chrome storage for feature preferences and requests Chrome privacy-setting access only if the user enables Chrome enhanced spell check.
 - Does not include any backend service, side panel, or style-guide lookup.
 - Does not collect, transmit, or analyze user data.
 
@@ -35,9 +35,11 @@ For local development or review:
 
 MateHelper sets `lang` and `spellcheck="true"` on detected target editors. Chrome still controls the actual spellchecker, so underlines depend on Chrome language support, installed dictionaries, focus, typing, and browser spellcheck settings.
 
+The popup can optionally ask Chrome to enable Enhanced Spell Check through Chrome's privacy settings API. If enabled, Chrome may send typed text to Google's spellcheck service. MateHelper does not receive, collect, or transmit that text.
+
 ## Release Package
 
-The Chrome Web Store package is `release/matehelper-0.3.0.zip`.
+The Chrome Web Store package is `release/matehelper-0.3.1.zip`.
 
 It contains only:
 

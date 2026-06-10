@@ -57,6 +57,10 @@ small {
   min-width: 0;
 }
 
+.setting.is-disabled {
+  opacity: 0.68;
+}
+
 strong {
   font-size: 14px;
 }

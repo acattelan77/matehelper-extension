@@ -5,7 +5,7 @@
 - Recommended visibility: Unlisted
 - Category: Productivity
 - Language: English
-- Package to upload: `release/matehelper-0.3.0.zip`
+- Package to upload: `release/matehelper-0.3.1.zip`
 
 Older ZIPs in `release/` are historical artifacts. Upload only the package listed above.
 
@@ -47,7 +47,7 @@ If GitHub Pages is not enabled, publish `docs/privacy.html` through another stat
 
 Permission justification:
 
-`MateHelper runs only on matecat.com and its subdomains because it needs to inspect visible page text and page structure to convert URL references into clickable links and enable spellcheck on target-language editing areas. It uses the storage permission only to save the user's local feature preferences. The extension processes page content locally in the browser and does not send, store, or collect page content.`
+`MateHelper runs only on matecat.com and its subdomains because it needs to inspect visible page text and page structure to convert URL references into clickable links and enable spellcheck on target-language editing areas. It uses the storage permission to save the user's local feature preferences. It requests optional privacy access only if the user enables Chrome Enhanced Spell Check, so it can ask Chrome to update that browser setting. The extension processes page content locally in the browser and does not send, store, or collect page content.`
 
 Single purpose:
 
@@ -62,6 +62,7 @@ Single purpose:
 5. Confirm plain-text URLs become clickable.
 6. Confirm literal anchor snippets link the visible label, not the raw attribute URL.
 7. Confirm target editing areas receive the detected target language and browser spellcheck.
-8. Confirm source text, unrelated inputs, unrelated textareas, editable content outside target areas, code blocks, and existing links are not changed.
-9. Confirm `qa/smoke-test.html` reports `"passed": true`.
-10. Upload `release/matehelper-0.3.0.zip` to the Chrome Web Store dashboard.
+8. Confirm the popup can request Chrome Enhanced Spell Check permission and reflects Chrome's setting state.
+9. Confirm source text, unrelated inputs, unrelated textareas, editable content outside target areas, code blocks, and existing links are not changed.
+10. Confirm `qa/smoke-test.html` reports `"passed": true`.
+11. Upload `release/matehelper-0.3.1.zip` to the Chrome Web Store dashboard.

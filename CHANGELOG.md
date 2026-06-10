@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+- Added an optional popup control for Chrome Enhanced Spell Check.
+- Added optional Chrome `privacy` permission support for updating Chrome's spellcheck web-service setting after user opt-in.
+- Updated privacy and store-submission notes for the optional Chrome Enhanced Spell Check behavior.
+
 ## 0.3.0
 
 - Added a toolbar popup for clickable URL, spellcheck, and diagnostics preferences.
