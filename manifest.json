@@ -1,8 +1,11 @@
 {
   "manifest_version": 3,
   "name": "MateHelper",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Unofficial Matecat helper for clickable URL references and target-language spellcheck.",
+  "permissions": [
+    "storage"
+  ],
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
@@ -11,6 +14,7 @@
   },
   "action": {
     "default_title": "MateHelper",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png",
@@ -27,8 +31,6 @@
       "js": [
         "content.js"
       ],
-      "all_frames": true,
-      "match_about_blank": true,
       "run_at": "document_idle"
     }
   ]

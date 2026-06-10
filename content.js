@@ -52,12 +52,100 @@
     "[data-testid*='target'] textarea",
     "[data-testid*='target'] [contenteditable]"
   ].join(",");
+  const TARGET_CONTAINER_SELECTOR = [
+    "[data-sid]",
+    ".targetarea",
+    ".target.item",
+    "[data-testid='simple-editor-test']",
+    "[data-target-lang]",
+    "[data-target-language]",
+    "[class*='target']",
+    "[data-testid*='target']"
+  ].join(",");
+  const EDITABLE_FIELD_SELECTOR = "textarea, [contenteditable]";
   const LANGUAGE_PAIR_SEGMENT_PATTERN = /^([a-z]{2,3}(?:-[a-z0-9]{2,8})?)-([a-z]{2,3}(?:-[a-z0-9]{2,8})?)$/i;
+  const SPELLCHECK_RETRY_DELAYS = [80, 300, 900];
+  const DEFAULT_SETTINGS = Object.freeze({
+    debugMode: false,
+    linkifyUrls: true,
+    spellcheck: true
+  });
 
   const queuedRoots = new Set();
-  const enhancedAnchors = new WeakSet();
+  const originalSpellcheckAttributes = new WeakMap();
+  const spellcheckRetryHandles = new WeakMap();
+  let settings = { ...DEFAULT_SETTINGS };
   let flushScheduled = false;
   let observerSuppressed = false;
+
+  function normalizeSettings(rawSettings) {
+    return {
+      debugMode: typeof rawSettings?.debugMode === "boolean" ? rawSettings.debugMode : DEFAULT_SETTINGS.debugMode,
+      linkifyUrls: typeof rawSettings?.linkifyUrls === "boolean" ? rawSettings.linkifyUrls : DEFAULT_SETTINGS.linkifyUrls,
+      spellcheck: typeof rawSettings?.spellcheck === "boolean" ? rawSettings.spellcheck : DEFAULT_SETTINGS.spellcheck
+    };
+  }
+
+  function debugLog(message, details = {}) {
+    if (!settings.debugMode) {
+      return;
+    }
+
+    console.debug(`[MateHelper] ${message}`, details);
+  }
+
+  function loadSettings(callback) {
+    if (typeof chrome === "undefined" || !chrome.storage?.sync) {
+      settings = { ...DEFAULT_SETTINGS };
+      callback();
+      return;
+    }
+
+    chrome.storage.sync.get(DEFAULT_SETTINGS, (storedSettings) => {
+      if (chrome.runtime?.lastError) {
+        debugLog("Could not load settings; using defaults.", chrome.runtime.lastError);
+        settings = { ...DEFAULT_SETTINGS };
+      } else {
+        settings = normalizeSettings(storedSettings);
+      }
+
+      callback();
+    });
+  }
+
+  function watchSettings() {
+    if (typeof chrome === "undefined" || !chrome.storage?.onChanged) {
+      return;
+    }
+
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== "sync") {
+        return;
+      }
+
+      const changedSettings = {};
+
+      Object.keys(DEFAULT_SETTINGS).forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(changes, key)) {
+          changedSettings[key] = changes[key].newValue;
+        }
+      });
+
+      const previousSettings = settings;
+      settings = normalizeSettings({ ...settings, ...changedSettings });
+      debugLog("Settings updated.", settings);
+
+      if (previousSettings.linkifyUrls && !settings.linkifyUrls) {
+        unwrapGeneratedLinks(document.body || document.documentElement);
+      }
+
+      if (previousSettings.spellcheck && !settings.spellcheck) {
+        restoreTargetSpellcheck(document.body || document.documentElement);
+      }
+
+      queueRoot(document.body || document.documentElement);
+    });
+  }
 
   function ensureGeneratedLinkStyles() {
     if (document.getElementById(GENERATED_LINK_STYLE_ID)) {
@@ -107,8 +195,8 @@
   }
 
   function isEditable(node) {
-    const parent = node?.parentElement;
-    return Boolean(parent && (parent.isContentEditable || parent.closest(CONTENT_EDITABLE_SELECTOR)));
+    const element = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+    return Boolean(element && (element.isContentEditable || element.closest(CONTENT_EDITABLE_SELECTOR)));
   }
 
   function normalizeLanguageCode(rawLanguage) {
@@ -317,6 +405,31 @@
     return anchor;
   }
 
+  function unwrapGeneratedLinks(root) {
+    if (!root || root.nodeType !== Node.ELEMENT_NODE) {
+      return;
+    }
+
+    const generatedLinks = [];
+
+    if (isGeneratedLink(root)) {
+      generatedLinks.push(root);
+    }
+
+    root.querySelectorAll(`a[${GENERATED_LINK_ATTR}="true"]`).forEach((anchor) => {
+      generatedLinks.push(anchor);
+    });
+
+    observerSuppressed = true;
+    try {
+      generatedLinks.forEach((anchor) => {
+        anchor.replaceWith(document.createTextNode(anchor.textContent || anchor.href));
+      });
+    } finally {
+      observerSuppressed = false;
+    }
+  }
+
   function parseLiteralAnchor(rawAnchor) {
     const template = document.createElement("template");
     template.innerHTML = rawAnchor;
@@ -447,38 +560,6 @@
     return changed ? fragment : null;
   }
 
-  function enhanceExistingAnchor(anchor) {
-    if (
-      !(anchor instanceof HTMLAnchorElement) ||
-      isGeneratedLink(anchor) ||
-      enhancedAnchors.has(anchor) ||
-      isEditable(anchor)
-    ) {
-      return;
-    }
-
-    const normalizedUrl = normalizeUrl(anchor.getAttribute("href") || "");
-
-    if (!normalizedUrl) {
-      return;
-    }
-
-    anchor.addEventListener("click", handleLinkClick);
-    enhancedAnchors.add(anchor);
-  }
-
-  function enhanceExistingAnchors(root) {
-    if (!root || root.nodeType !== Node.ELEMENT_NODE) {
-      return;
-    }
-
-    if (root.matches("a[href]")) {
-      enhanceExistingAnchor(root);
-    }
-
-    root.querySelectorAll("a[href]").forEach(enhanceExistingAnchor);
-  }
-
   function canLinkifyLiteralAnchorContainer(element) {
     if (!(element instanceof Element) || element.closest(SKIP_SELECTOR) || isEditable(element)) {
       return false;
@@ -545,6 +626,13 @@
       return;
     }
 
+    if (!originalSpellcheckAttributes.has(element)) {
+      originalSpellcheckAttributes.set(element, {
+        lang: element.getAttribute("lang"),
+        spellcheck: element.getAttribute("spellcheck")
+      });
+    }
+
     if (element.getAttribute("lang") !== targetLanguage) {
       element.setAttribute("lang", targetLanguage);
     }
@@ -558,35 +646,121 @@
     }
   }
 
+  function restoreElementSpellcheck(element) {
+    const originalAttributes = originalSpellcheckAttributes.get(element);
+
+    if (!originalAttributes) {
+      return;
+    }
+
+    if (originalAttributes.lang === null) {
+      element.removeAttribute("lang");
+    } else {
+      element.setAttribute("lang", originalAttributes.lang);
+    }
+
+    if (originalAttributes.spellcheck === null) {
+      element.removeAttribute("spellcheck");
+    } else {
+      element.setAttribute("spellcheck", originalAttributes.spellcheck);
+
+      if ("spellcheck" in element) {
+        element.spellcheck = originalAttributes.spellcheck !== "false";
+      }
+    }
+
+    originalSpellcheckAttributes.delete(element);
+  }
+
+  function restoreTargetSpellcheck(root) {
+    collectTargetSpellcheckElements(root).forEach(restoreElementSpellcheck);
+  }
+
+  function collectTargetSpellcheckElements(root) {
+    const elements = new Set();
+
+    if (!root || root.nodeType !== Node.ELEMENT_NODE) {
+      return elements;
+    }
+
+    if (root.matches(TARGET_EDITABLE_SELECTOR)) {
+      elements.add(root);
+    }
+
+    root.querySelectorAll(TARGET_EDITABLE_SELECTOR).forEach((element) => {
+      elements.add(element);
+    });
+
+    elements.forEach((element) => {
+      if (element.matches(TARGET_CONTAINER_SELECTOR)) {
+        element.querySelectorAll(EDITABLE_FIELD_SELECTOR).forEach((editable) => {
+          elements.add(editable);
+        });
+      }
+    });
+
+    return elements;
+  }
+
+  function scheduleTargetSpellcheckRetry(root) {
+    if (!settings.spellcheck || !root || root.nodeType !== Node.ELEMENT_NODE || spellcheckRetryHandles.has(root)) {
+      return;
+    }
+
+    const handles = SPELLCHECK_RETRY_DELAYS.map((delay) => window.setTimeout(() => {
+      applyTargetSpellcheck(root);
+    }, delay));
+
+    spellcheckRetryHandles.set(root, handles);
+
+    window.setTimeout(() => {
+      spellcheckRetryHandles.delete(root);
+    }, Math.max(...SPELLCHECK_RETRY_DELAYS) + 50);
+  }
+
   function applyTargetSpellcheck(root) {
+    if (!settings.spellcheck) {
+      return;
+    }
+
     const targetLanguage = inferTargetLanguage();
 
     if (!targetLanguage || !root || root.nodeType !== Node.ELEMENT_NODE) {
       return;
     }
 
-    const targets = [];
+    let appliedCount = 0;
 
-    if (root.matches(TARGET_EDITABLE_SELECTOR)) {
-      targets.push(root);
+    collectTargetSpellcheckElements(root).forEach((element) => {
+      applyTargetSpellcheckToElement(element, targetLanguage);
+      appliedCount += 1;
+    });
+
+    if (appliedCount > 0) {
+      debugLog("Applied target spellcheck.", {
+        appliedCount,
+        targetLanguage
+      });
+    }
+  }
+
+  function applyTargetSpellcheckFromFocus(event) {
+    const target = event.target;
+
+    if (!(target instanceof HTMLElement)) {
+      return;
     }
 
-    root.querySelectorAll(TARGET_EDITABLE_SELECTOR).forEach((element) => {
-      targets.push(element);
-    });
-
-    targets.forEach((element) => {
-      applyTargetSpellcheckToElement(element, targetLanguage);
-
-      if (element.matches("[data-sid], .targetarea, .target.item, [data-testid='simple-editor-test'], [data-target-lang], [data-target-language]")) {
-        element.querySelectorAll("textarea, [contenteditable]").forEach((editable) => {
-          applyTargetSpellcheckToElement(editable, targetLanguage);
-        });
-      }
-    });
+    const root = target.closest(TARGET_CONTAINER_SELECTOR) || target;
+    applyTargetSpellcheck(root);
+    scheduleTargetSpellcheckRetry(root);
   }
 
   function linkifyTextNode(node) {
+    if (!settings.linkifyUrls) {
+      return;
+    }
+
     if (shouldSkipTextNode(node)) {
       return;
     }
@@ -616,8 +790,10 @@
     }
 
     applyTargetSpellcheck(root);
-    linkifyLiteralAnchorContainers(root);
-    enhanceExistingAnchors(root);
+    scheduleTargetSpellcheckRetry(root);
+    if (settings.linkifyUrls) {
+      linkifyLiteralAnchorContainers(root);
+    }
 
     const treeWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const textNodes = [];
@@ -680,16 +856,20 @@
   }
 
   function start() {
-    ensureGeneratedLinkStyles();
-    queueRoot(document.body || document.documentElement);
+    loadSettings(() => {
+      ensureGeneratedLinkStyles();
+      watchSettings();
+      queueRoot(document.body || document.documentElement);
+      document.addEventListener("focusin", applyTargetSpellcheckFromFocus, true);
 
-    const observer = new MutationObserver(handleMutations);
-    observer.observe(document.documentElement, {
-      attributeFilter: ["class", "contenteditable", "data-sid", "data-target-lang", "data-target-language", "data-testid", "spellcheck", "lang"],
-      attributes: true,
-      childList: true,
-      characterData: true,
-      subtree: true
+      const observer = new MutationObserver(handleMutations);
+      observer.observe(document.documentElement, {
+        attributeFilter: ["class", "contenteditable", "data-sid", "data-target-lang", "data-target-language", "data-testid", "spellcheck", "lang"],
+        attributes: true,
+        childList: true,
+        characterData: true,
+        subtree: true
+      });
     });
   }
 

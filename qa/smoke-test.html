@@ -248,6 +248,9 @@
           </div>
           <textarea id="spell-target-textarea" class="targetarea" data-sid="2002" spellcheck="false">Textarea target should become Latin American Spanish.</textarea>
           <div id="spell-simple-target" data-testid="simple-editor-test" class="targetarea editarea" spellcheck="false">Simple target should become Latin American Spanish.</div>
+          <button id="reset-spellcheck" type="button">Reset target spellcheck</button>
+          <button id="replace-target-editor" type="button">Replace target editor</button>
+          <div id="replacement-target" class="targetarea editarea" data-sid="2003"></div>
         </div>
       </section>
 
@@ -263,6 +266,11 @@
         <h2>Long URL-Like Text</h2>
         <p id="long-url"></p>
       </section>
+
+      <section>
+        <h2>Automated Checks</h2>
+        <pre id="smoke-results">Running checks...</pre>
+      </section>
     </main>
 
     <script>
@@ -270,6 +278,28 @@
         const paragraph = document.createElement("p");
         paragraph.textContent = "Expected: dynamic URL becomes clickable. https://dynamic.example/test";
         document.getElementById("dynamic-target").append(paragraph);
+      });
+
+      document.getElementById("reset-spellcheck").addEventListener("click", () => {
+        const target = document.getElementById("spell-target");
+        target.setAttribute("lang", "");
+        target.setAttribute("spellcheck", "false");
+        target.spellcheck = false;
+        target.focus();
+      });
+
+      document.getElementById("replace-target-editor").addEventListener("click", () => {
+        const replacementTarget = document.getElementById("replacement-target");
+        replacementTarget.replaceChildren();
+
+        const replacementEditor = document.createElement("div");
+        replacementEditor.id = "spell-replacement-target";
+        replacementEditor.className = "notranslate public-DraftEditor-content";
+        replacementEditor.setAttribute("contenteditable", "true");
+        replacementEditor.setAttribute("role", "textbox");
+        replacementEditor.setAttribute("spellcheck", "false");
+        replacementEditor.textContent = "Replacement target should become Latin American Spanish.";
+        replacementTarget.append(replacementEditor);
       });
 
       const splitLiteralAnchor = document.getElementById("split-literal-anchor");
@@ -283,5 +313,58 @@
         "Expected: page stays responsive and may leave long token plain. https://long.example/" + ")".repeat(12000);
     </script>
     <script src="../content.js"></script>
+    <script>
+      function spellcheckState(id) {
+        const element = document.getElementById(id);
+        return element ? {
+          lang: element.getAttribute("lang"),
+          spellcheck: element.getAttribute("spellcheck")
+        } : null;
+      }
+
+      function assertCheck(results, name, condition, details = null) {
+        results.push({
+          details,
+          name,
+          passed: Boolean(condition)
+        });
+      }
+
+      async function runSmokeChecks() {
+        await new Promise((resolve) => window.requestAnimationFrame(resolve));
+        await new Promise((resolve) => window.setTimeout(resolve, 120));
+
+        document.getElementById("add-dynamic").click();
+        await new Promise((resolve) => window.setTimeout(resolve, 120));
+
+        document.getElementById("reset-spellcheck").click();
+        await new Promise((resolve) => window.setTimeout(resolve, 160));
+
+        document.getElementById("replace-target-editor").click();
+        await new Promise((resolve) => window.setTimeout(resolve, 420));
+
+        const results = [];
+        const generatedLinks = document.querySelectorAll('a[data-matehelper-generated="true"]');
+        const dynamicLinks = document.querySelectorAll('#dynamic-target a[data-matehelper-generated="true"]');
+        const existingLink = document.querySelector('a[href="https://example.org/"]');
+        const resetTarget = spellcheckState("spell-target");
+        const replacementTarget = spellcheckState("spell-replacement-target");
+        const sourceTarget = spellcheckState("spell-source");
+
+        assertCheck(results, "Generated expected links", generatedLinks.length >= 8, generatedLinks.length);
+        assertCheck(results, "Dynamic URL linkified", dynamicLinks.length === 1, dynamicLinks.length);
+        assertCheck(results, "Existing link not marked generated", existingLink && !existingLink.hasAttribute("data-matehelper-generated"));
+        assertCheck(results, "Focus restored target spellcheck", resetTarget?.lang === "es-419" && resetTarget?.spellcheck === "true", resetTarget);
+        assertCheck(results, "Replacement editor received spellcheck", replacementTarget?.lang === "es-419" && replacementTarget?.spellcheck === "true", replacementTarget);
+        assertCheck(results, "Source editor unchanged", sourceTarget?.lang === null && sourceTarget?.spellcheck === "false", sourceTarget);
+
+        const passed = results.every((result) => result.passed);
+        const smokeResults = document.getElementById("smoke-results");
+        smokeResults.dataset.status = passed ? "passed" : "failed";
+        smokeResults.textContent = JSON.stringify({ passed, results }, null, 2);
+      }
+
+      runSmokeChecks();
+    </script>
   </body>
 </html>

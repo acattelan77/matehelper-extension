@@ -18,9 +18,9 @@ It also watches dynamically rendered content, such as modals and popups, so URL 
 MateHelper is intentionally minimal:
 
 - Runs only on `matecat.com` and its subdomains, as declared in the extension manifest.
-- Requests no Chrome extension permissions.
+- Requests only the Chrome `storage` permission for feature preferences.
 - Does not use a background worker.
-- Does not collect, store, transmit, or analyze user data.
+- Does not collect, transmit, or analyze user data.
 - Does not use analytics, tracking, or remote code.
 - Skips existing links, source text, unrelated editable fields, form controls, buttons, and code blocks.
 
@@ -38,7 +38,7 @@ Chrome Web Store privacy tab suggestions:
 - Data sale or transfer: No user data is sold, shared, transferred, or sent to third parties.
 - Remote code: The extension does not use remote code.
 - Analytics/tracking: The extension does not use analytics, tracking, cookies, or external servers.
-- Permission justification: The extension runs only on `matecat.com` and its subdomains because it needs to inspect visible page text and page structure to convert URL references into clickable links and enable spellcheck on target-language editing areas. It requests no additional Chrome extension permissions.
+- Permission justification: The extension runs only on `matecat.com` and its subdomains because it needs to inspect visible page text and page structure to convert URL references into clickable links and enable spellcheck on target-language editing areas. It uses the `storage` permission only to save feature preferences.
 
 ## Single Purpose
 
