@@ -5,11 +5,20 @@ const DEFAULT_SETTINGS = {
 };
 
 const settingIds = Object.keys(DEFAULT_SETTINGS);
+const extensionVersion = document.getElementById("extensionVersion");
 const enhancedSpellcheckInput = document.getElementById("enhancedSpellcheck");
 const enhancedSpellcheckSetting = document.getElementById("enhancedSpellcheckSetting");
 const enhancedSpellcheckStatus = document.getElementById("enhancedSpellcheckStatus");
-const PRIVACY_PERMISSION = { permissions: ["privacy"] };
+const openChromeLanguageSettingsButton = document.getElementById("openChromeLanguageSettings");
 let enhancedSpellcheckListenerAttached = false;
+
+function applyVersion() {
+  const version = chrome.runtime?.getManifest?.().version;
+
+  if (version) {
+    extensionVersion.textContent = `v${version}`;
+  }
+}
 
 function applySettings(settings) {
   settingIds.forEach((id) => {
@@ -21,7 +30,10 @@ function applySettings(settings) {
 function setEnhancedSpellcheckUi({ checked = false, disabled = false, status }) {
   enhancedSpellcheckInput.checked = checked;
   enhancedSpellcheckInput.disabled = disabled;
-  enhancedSpellcheckStatus.textContent = status;
+  if (status) {
+    enhancedSpellcheckStatus.textContent = status;
+    enhancedSpellcheckStatus.hidden = true;
+  }
   enhancedSpellcheckSetting.classList.toggle("is-disabled", disabled);
 }
 
@@ -55,42 +67,30 @@ function watchEnhancedSpellcheckChanges() {
 }
 
 function refreshEnhancedSpellcheckUi() {
-  chrome.permissions.contains(PRIVACY_PERMISSION, (hasPermission) => {
-    if (chrome.runtime.lastError || !hasPermission) {
-      setEnhancedSpellcheckUi({
-        status: "Ask Chrome on enable"
-      });
-      return;
-    }
+  if (!chrome.privacy?.services?.spellingServiceEnabled) {
+    setEnhancedSpellcheckUi({
+      disabled: true,
+      status: "Not available in Chrome"
+    });
+    return;
+  }
 
-    if (!chrome.privacy?.services?.spellingServiceEnabled) {
+  watchEnhancedSpellcheckChanges();
+
+  getEnhancedSpellcheckSetting((details) => {
+    if (!details) {
       setEnhancedSpellcheckUi({
         disabled: true,
-        status: "Not available in Chrome"
+        status: "Could not read setting"
       });
       return;
     }
 
-    watchEnhancedSpellcheckChanges();
+    const canControl = canControlChromeSetting(details.levelOfControl);
 
-    getEnhancedSpellcheckSetting((details) => {
-      if (!details) {
-        setEnhancedSpellcheckUi({
-          disabled: true,
-          status: "Could not read setting"
-        });
-        return;
-      }
-
-      const canControl = canControlChromeSetting(details.levelOfControl);
-
-      setEnhancedSpellcheckUi({
-        checked: Boolean(details.value),
-        disabled: !canControl,
-        status: canControl
-          ? details.value ? "Enabled in Chrome" : "Disabled in Chrome"
-          : "Managed outside MateHelper"
-      });
+    setEnhancedSpellcheckUi({
+      checked: Boolean(details.value),
+      disabled: !canControl
     });
   });
 }
@@ -100,6 +100,12 @@ function setEnhancedSpellcheck(enabled) {
     refreshEnhancedSpellcheckUi();
     return;
   }
+
+  setEnhancedSpellcheckUi({
+    checked: enabled,
+    disabled: true,
+    status: enabled ? "Turning web service on..." : "Turning web service off..."
+  });
 
   getEnhancedSpellcheckSetting((details) => {
     if (!details || !canControlChromeSetting(details.levelOfControl)) {
@@ -111,6 +117,7 @@ function setEnhancedSpellcheck(enabled) {
       if (chrome.runtime.lastError) {
         setEnhancedSpellcheckUi({
           checked: Boolean(details.value),
+          disabled: false,
           status: "Could not update setting"
         });
         return;
@@ -121,6 +128,16 @@ function setEnhancedSpellcheck(enabled) {
   });
 }
 
+function enableTargetEditorSpellcheck(callback) {
+  const input = document.getElementById("spellcheck");
+  input.checked = true;
+
+  chrome.storage.sync.set({ spellcheck: true }, () => {
+    callback();
+  });
+}
+
+applyVersion();
 chrome.storage.sync.get(DEFAULT_SETTINGS, applySettings);
 refreshEnhancedSpellcheckUi();
 
@@ -140,14 +157,11 @@ enhancedSpellcheckInput.addEventListener("change", (event) => {
     return;
   }
 
-  chrome.permissions.request(PRIVACY_PERMISSION, (granted) => {
-    if (chrome.runtime.lastError || !granted) {
-      setEnhancedSpellcheckUi({
-        status: "Permission not granted"
-      });
-      return;
-    }
-
+  enableTargetEditorSpellcheck(() => {
     setEnhancedSpellcheck(true);
   });
+});
+
+openChromeLanguageSettingsButton.addEventListener("click", () => {
+  chrome.tabs.create({ url: "chrome://settings/languages" });
 });

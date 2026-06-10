@@ -1,13 +1,11 @@
 {
   "manifest_version": 3,
   "name": "MateHelper",
-  "version": "0.3.2",
+  "version": "0.3.7",
   "description": "Unofficial Matecat helper for clickable URL references and target-language spellcheck.",
   "permissions": [
+    "privacy",
     "storage"
-  ],
-  "optional_permissions": [
-    "privacy"
   ],
   "icons": {
     "16": "icons/icon-16.png",

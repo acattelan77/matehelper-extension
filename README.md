@@ -10,7 +10,7 @@ Install MateHelper from its Chrome Web Store listing once it is published.
 
 For local development or review:
 
-1. Download and unzip `release/matehelper-0.3.2.zip`.
+1. Download and unzip `release/matehelper-0.3.7.zip`.
 2. Open `chrome://extensions`.
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
@@ -24,22 +24,24 @@ For local development or review:
 - Keeps raw URLs inside literal anchor attributes from being linked accidentally.
 - Enables browser spellcheck on target-language editing areas when a target language can be detected from the page.
 - Reapplies target spellcheck when Matecat replaces or resets target editors.
-- Includes a toolbar popup to toggle clickable URLs, Target Editor Spellcheck, optional Enhanced Chrome Spell Check, and diagnostics.
+- Includes a toolbar popup to open Chrome spell check settings, set target language for spellcheck, control optional Enhanced Spell Check, toggle clickable URLs, and enable diagnostics.
 - Watches for dynamically rendered content, including modals and popups.
 - Skips existing links, source text, unrelated form fields, editable content outside target areas, buttons, and code blocks.
-- Uses Chrome storage for feature preferences and requests Chrome privacy-setting access only if the user enables Chrome enhanced spell check.
+- Uses Chrome storage for feature preferences and Chrome privacy-setting access to let the popup control Enhanced Chrome Spell Check.
 - Does not include any backend service, side panel, or style-guide lookup.
 - Does not collect, transmit, or analyze user data.
 
 ## Spellcheck Notes
 
-Target Editor Spellcheck is enabled by default. MateHelper sets `lang` and `spellcheck="true"` on detected Matecat target editors when this popup option is on. Chrome still controls the actual spellchecker, so underlines depend on Chrome language support, installed dictionaries, focus, typing, and browser spellcheck settings.
+Set Target Language is enabled by default. MateHelper sets `lang` and `spellcheck="true"` on detected Matecat target editors when this popup option is on. This helps Chrome use the Matecat target language for spellcheck. Chrome still controls the actual spellchecker, so underlines depend on Chrome language support, installed dictionaries, focus, typing, and browser spellcheck settings.
 
-Enhanced Chrome Spell Check is a separate popup option. It can ask Chrome to enable the optional web-service spellcheck through Chrome's privacy settings API. If enabled, Chrome may send typed text to Google's spellcheck service. MateHelper does not receive, collect, or transmit that text.
+Enhanced Chrome Spell Check is a separate popup option. It can ask Chrome to enable the optional web-service spellcheck through Chrome's privacy settings API. This does not enable Chrome's main "Check for spelling errors" setting; that Chrome setting must still be on. Turning Enhanced Chrome Spell Check on also turns Set Target Language on, because Chrome can only show spellcheck results in eligible editors. If Enhanced Chrome Spell Check is enabled and Chrome spellcheck is active, Chrome may send typed text to Google's spellcheck service. MateHelper does not receive, collect, or transmit that text.
+
+The popup includes a Chrome Spell Check row with an icon button that opens Chrome language settings.
 
 ## Release Package
 
-The Chrome Web Store package is `release/matehelper-0.3.2.zip`.
+The Chrome Web Store package is `release/matehelper-0.3.7.zip`.
 
 It contains only:
 
