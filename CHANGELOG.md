@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+- Renamed the popup spellcheck controls to Target Editor Spellcheck and Enhanced Chrome Spell Check.
+- Kept Target Editor Spellcheck enabled by default.
+- Clarified that target-editor spellcheck and Chrome's enhanced web-service spellcheck are separate controls.
+
 ## 0.3.1
 
 - Added an optional popup control for Chrome Enhanced Spell Check.

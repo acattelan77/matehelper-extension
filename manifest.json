@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MateHelper",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Unofficial Matecat helper for clickable URL references and target-language spellcheck.",
   "permissions": [
     "storage"
